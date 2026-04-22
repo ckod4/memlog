@@ -16,10 +16,7 @@ impl Entry {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        let payload = self.payload.as_bytes();
-        for &item in payload {
-            bytes.push(item);
-        }
+        bytes.extend_from_slice(self.payload.as_bytes());
         bytes
     }
 
