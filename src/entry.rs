@@ -13,4 +13,14 @@ impl Entry {
             .as_millis() as u64;
         Entry { timestamp, payload }
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        let payload = self.payload.as_bytes();
+        for &item in payload {
+            bytes.push(item);
+        }
+        bytes
+    }
 }
+
