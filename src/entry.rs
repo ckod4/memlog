@@ -1,4 +1,4 @@
-/// Placeholder for the entry module.
-pub fn placeholder() -> String {
-    todo!("Entry module — to be implemented...")
+struct Entry {
+    timestamp: u64,
+    payload: String,
 }
