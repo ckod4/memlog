@@ -22,5 +22,18 @@ impl Entry {
         }
         bytes
     }
+
+    pub fn from_bytes(data: &Vec<u8>) -> Self {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Operating system clock needs settings, it is running at a time before UNIX_EPOCH !")
+            .as_millis() as u64;
+        let payload: String = String::from_utf8(data.to_vec())
+        .expect("Found invalid UTF-8 bytes");
+        Entry {
+            timestamp,
+            payload
+        }
+    }
 }
 
