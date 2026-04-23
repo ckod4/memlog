@@ -35,6 +35,14 @@ impl Entry {
         let payload: Vec<u8> = data[8..].to_vec();
         Ok(Entry { timestamp, payload })
     }
+
+    pub fn timestamp(&self) -> u64 {
+        self.timestamp
+    }
+
+    pub fn payload(&self) -> &[u8] {
+        &self.payload
+    }
 }
 
 
