@@ -36,3 +36,41 @@ impl Entry {
         Ok(Entry { timestamp, payload })
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn serialize_entry() {
+        let new_entry = Entry::new("Log this event".as_bytes().to_vec());
+        let serialized_entry: Vec<u8> = new_entry.to_bytes();
+        assert!(!serialized_entry.is_empty());
+    }
+    
+    #[test]
+    fn deserialize_entry() {
+        let initial_entry: Entry = Entry::new("Request done !".as_bytes().to_vec());
+        let serialized_entry: Vec<u8> = initial_entry.to_bytes();
+        let final_entry: Entry = Entry::from_bytes(&serialized_entry).unwrap();
+        assert_eq!(initial_entry.payload, final_entry.payload);
+        let initial_payload: Vec<u8> = initial_entry.payload.to_vec();
+        let initial_payload_value: Result<String, _> = String::from_utf8(initial_payload.to_vec());
+        assert!(initial_payload_value.is_ok());
+        let x = initial_payload_value.unwrap();
+        assert_eq!(&x, "Request done !");
+        print!("{x}");
+        assert_eq!(initial_entry.timestamp, final_entry.timestamp);
+    }
+    
+    #[test]
+    #[should_panic]
+    fn deserialize_invalid_entry() {
+        let initial_entry: Entry = Entry::new("File extraction encountered an error".as_bytes().to_vec());
+        let serialized_entry: Vec<u8> = initial_entry.to_bytes();
+        let Ok(Entry{timestamp: _, payload: _ }) = Entry::from_bytes(&serialized_entry[0..3]) else {
+            panic!("Invalid entry");
+        };
+    }
+}
