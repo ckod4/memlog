@@ -1,6 +1,12 @@
 use crc32fast::Hasher;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum DeserializationError {
+    InvalidBytesLength(String),
+    ChecksumNotConform(String),
+}
+
 pub struct Entry {
     timestamp: u64,
     payload: Vec<u8>,
@@ -37,12 +43,15 @@ impl Entry {
         bytes
     }
 
-    pub fn from_bytes(data: &[u8]) -> Result<Entry, String> {
+    pub fn from_bytes(data: &[u8]) -> Result<Entry, DeserializationError> {
+        let actual_length = data.len();
         if data.len() < 16 {
             // 8 (timestamp) + 4 (payload-length) + 4 (checksum)
-            return Err(String::from(
-                "Incorrect length of data to deserialize, the minimum length requirement is not met !",
-            ));
+            return Err(
+                DeserializationError::InvalidBytesLength(
+                    format!("Expected data length >= 16, received {actual_length}")
+                )
+            );
         }
         let timestamp_bytes_vec: [u8; 8] = [
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
@@ -51,13 +60,14 @@ impl Entry {
         let payload_length_bytes_vec: [u8; 4] = [data[8], data[9], data[10], data[11]];
         let payload_length = u32::from_le_bytes(payload_length_bytes_vec) as usize;
         let expected_length = 8 + 4 + payload_length + 4;
-        let actual_length = data.len();
-
+        
         if actual_length < expected_length {
-            // 8 (timestamp) + 4 (payload-length) + payload + checksun
-            return Err(String::from(
-                "Incorrect length of data to deserialize, expected {expected_length} but got {actual_length}",
-            ));
+            // 8 (timestamp) + 4 (payload-length) + payload + checksum
+            return Err(
+                DeserializationError::InvalidBytesLength(
+                    format!("Computed data length expected {expected_length}, actual data received {actual_length}").to_string()
+                )
+            );
         }
         let payload_start_index = 12;
         let payload_end_index = payload_start_index + payload_length;
@@ -74,9 +84,11 @@ impl Entry {
         let computed_checksum = Self::compute_checksum(timestamp, &payload);
 
         if checksum_extracted != computed_checksum {
-            return Err(String::from(
-                "Data has been tampered, computed checksum invalid !",
-            ));
+            return Err(
+                DeserializationError::ChecksumNotConform(
+                    format!("Computed checksum is different from provided data. Computed checksum: {computed_checksum}, provided data checksum: {checksum_extracted}")
+                )
+            );
         }
         Ok(Entry {
             timestamp,
